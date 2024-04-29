@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: w2pdf
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - w2pdfnet
+
+  backend:
+    build:
+      context: ./W-2PDF/backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://postgres:1234@db:5432/w2pdf
+      DEBUG: '1'
+      HOST: '0.0.0.0'
+      PORT: '8000'
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      OPEN_API_KEY: ${OPEN_API_KEY}
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    networks:
+      - w2pdfnet
+
+  frontend:
+    build:
+      context: ./W-2PDF/frontend
+      dockerfile: Dockerfile
+    environment:
+      VITE_BACKEND_URL: http://backend:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - w2pdfnet
+
+networks:
+  w2pdfnet:
+
+volumes:
+  postgres_data:
